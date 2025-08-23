@@ -2,6 +2,8 @@
 
 A modern, full-stack AI chat application built with Next.js 15, featuring real-time AI conversations, user authentication, and a beautiful UI powered by Nalang.ai.
 
+![alt text](./img/demo.png "Demo")
+
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js 15, React 19, TypeScript
 - **UI Components**: Radix UI, Tailwind CSS, Lucide React icons
@@ -98,71 +100,6 @@ nalangai/
 └── scripts/                # Build and deployment scripts
 ```
 
-## 🔧 Configuration
-
-### Supabase Setup
-
-1. **Database Tables**
-   ```sql
-   -- Conversations table
-   CREATE TABLE conversations (
-     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-     title TEXT NOT NULL,
-     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-
-   -- Messages table
-   CREATE TABLE messages (
-     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-     conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
-     role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
-     content TEXT NOT NULL,
-     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-   );
-
-   -- Enable RLS
-   ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
-   ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
-
-   -- RLS Policies
-   CREATE POLICY "Users can view own conversations" ON conversations
-     FOR ALL USING (auth.uid() = user_id);
-
-   CREATE POLICY "Users can view own messages" ON messages
-     FOR ALL USING (
-       conversation_id IN (
-         SELECT id FROM conversations WHERE user_id = auth.uid()
-       )
-     );
-   ```
-
-2. **Authentication**
-   - Enable Email/Password authentication in Supabase Auth
-   - Configure redirect URLs for your domain
-
-### OpenAI Configuration
-
-- Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
-- The app uses GPT-3.5-turbo by default
-- You can modify the model and parameters in `app/api/chat/route.ts`
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. **Connect your repository to Vercel**
-2. **Set environment variables** in Vercel dashboard
-3. **Deploy** - Vercel will automatically detect Next.js and build
-
-### Other Platforms
-
-The app can be deployed to any platform that supports Next.js:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
 
 ## 🎨 Customization
 
@@ -178,33 +115,7 @@ The app can be deployed to any platform that supports Next.js:
 - Customize components in `components/ui/`
 - Add new components following the existing pattern
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- Built with [Next.js](https://nextjs.org/)
-- UI components from [Radix UI](https://www.radix-ui.com/)
-- Styling with [Tailwind CSS](https://tailwindcss.com/)
-- Icons from [Lucide React](https://lucide.dev/)
-- AI integration via [AI SDK](https://sdk.vercel.ai/)
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-- Open an issue on GitHub
-- Check the [Supabase documentation](https://supabase.com/docs)
-- Review [Next.js documentation](https://nextjs.org/docs)
-
----
-
-**Happy coding! 🚀** 
