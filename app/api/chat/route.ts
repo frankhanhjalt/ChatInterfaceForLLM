@@ -1,7 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
-import { streamText } from "ai"
-import { openai } from "@ai-sdk/openai"
 
 export async function POST(request: NextRequest) {
   let user: any = null
@@ -11,8 +9,8 @@ export async function POST(request: NextRequest) {
     if (process.env.NODE_ENV === 'development') {
       console.log("🔧 [Chat API] Environment check:")
       console.log("🔧 [Chat API] NODE_ENV:", process.env.NODE_ENV)
-      console.log("🔧 [Chat API] OPENAI_API_KEY exists:", !!process.env.OPENAI_API_KEY)
-      console.log("🔧 [Chat API] OPENAI_API_KEY length:", process.env.OPENAI_API_KEY?.length || 0)
+      console.log("🔧 [Chat API] NALANG_API_KEY exists:", !!process.env.NALANG_API_KEY)
+      console.log("🔧 [Chat API] NALANG_MODEL:", process.env.NALANG_MODEL || 'nalang-xl-10')
     }
     
     const supabase = await createClient()
@@ -51,44 +49,125 @@ export async function POST(request: NextRequest) {
 
     // Log the request in development mode
     if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 [OpenAI Request] User:', user.email)
-      console.log('📝 [OpenAI Request] Messages:', JSON.stringify(messages, null, 2))
-      console.log('💬 [OpenAI Request] Conversation ID:', conversationId)
+      console.log('🚀 [Nalang Request] User:', user.email)
+      console.log('📝 [Nalang Request] Messages:', JSON.stringify(messages, null, 2))
+      console.log('💬 [Nalang Request] Conversation ID:', conversationId)
     }
 
-    // Test OpenAI client
-    if (process.env.NODE_ENV === 'development') {
-      try {
-        console.log('🧪 [OpenAI Request] Testing OpenAI client...')
-        const testModel = openai("gpt-3.5-turbo")
-        console.log('✅ [OpenAI Request] OpenAI client created successfully')
-      } catch (error) {
-        console.error('❌ [OpenAI Request] Failed to create OpenAI client:', error)
-      }
+    const apiKey = process.env.NALANG_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: "NALANG_API_KEY is not configured" }, { status: 500 })
     }
 
-    // Create streaming response using OpenAI directly
-    console.log('🤖 [OpenAI Request] Creating streaming response...')
-    
-    // Use OpenAI streaming with the actual user messages
-    const result = await streamText({
-      model: openai("gpt-3.5-turbo"),
-      messages: messages.map(msg => ({
+    const model = process.env.NALANG_MODEL || 'nalang-xl-10'
+
+    // Build nalang request body
+    const requestBody = {
+      model,
+      messages: messages.map((msg: any) => ({
         role: msg.role,
         content: msg.content,
       })),
+      stream: true,
       temperature: 0.7,
+      max_tokens: 800,
+      top_p: 0.35,
+      repetition_penalty: 1.05,
+    }
+
+    // Call nalang streaming API
+    console.log('🤖 [Nalang Request] Creating streaming response...')
+    const nalangResponse = await fetch('https://www.gpt4novel.com/api/xiaoshuoai/ext/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(requestBody),
     })
-    
-    console.log('✅ [OpenAI Response] Streaming response created successfully')
-    
-    return result.toTextStreamResponse()
+
+    if (!nalangResponse.ok || !nalangResponse.body) {
+      const errorText = await nalangResponse.text().catch(() => '')
+      return NextResponse.json({ error: `Upstream error ${nalangResponse.status}: ${errorText || nalangResponse.statusText}` }, { status: 502 })
+    }
+
+    // Transform nalang SSE lines (data: {...}\n) into plain text chunks for the client
+    const upstream = nalangResponse.body
+    const textEncoder = new TextEncoder()
+    const textDecoder = new TextDecoder()
+
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        const reader = upstream.getReader()
+        let buffer = ''
+
+        const processLine = (line: string) => {
+          const trimmed = line.trim()
+          if (!trimmed) return
+          if (!trimmed.startsWith('data: ')) return
+          const payload = trimmed.slice(6).trim()
+          if (!payload || payload === '[DONE]') return
+          try {
+            const json = JSON.parse(payload)
+            if (json.completed) {
+              controller.close()
+              return
+            }
+            const delta = json?.choices?.[0]?.delta?.content
+            if (typeof delta === 'string' && delta.length > 0) {
+              controller.enqueue(textEncoder.encode(delta))
+            }
+          } catch (e) {
+            // Ignore non-JSON keepalive lines
+          }
+        }
+
+        const pump = (): any => {
+          reader.read().then(({ done, value }) => {
+            if (done) {
+              if (buffer) {
+                processLine(buffer)
+              }
+              controller.close()
+              return
+            }
+            buffer += textDecoder.decode(value, { stream: true })
+            let newlineIndex: number
+            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+              const line = buffer.slice(0, newlineIndex)
+              buffer = buffer.slice(newlineIndex + 1)
+              processLine(line)
+            }
+            pump()
+          }).catch((err) => {
+            controller.error(err)
+          })
+        }
+
+        pump()
+      },
+      cancel() {
+        try {
+          upstream.cancel()
+        } catch {}
+      }
+    })
+
+    console.log('✅ [Nalang Response] Streaming response created successfully')
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no',
+      },
+    })
   } catch (error) {
     console.error("Chat API error:", error)
     
     // Enhanced error logging in development mode
     if (process.env.NODE_ENV === 'development') {
-      console.error('❌ [OpenAI Error] Details:', {
+      console.error('❌ [Nalang Error] Details:', {
         message: error instanceof Error ? error.message : 'Unknown error',
         stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),

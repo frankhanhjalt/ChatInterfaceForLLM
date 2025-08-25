@@ -9,7 +9,7 @@ A modern, full-stack AI chat application built with Next.js 15, featuring real-t
 - **UI Components**: Radix UI, Tailwind CSS, Lucide React icons
 - **Authentication**: Supabase Auth
 - **Database**: Supabase (PostgreSQL)
-- **AI Integration**: OpenAI API via AI SDK
+- **AI Integration**: nalang API (SSE streaming)
 - **Styling**: Tailwind CSS with custom animations
 - **Forms**: React Hook Form with Zod validation
 - **State Management**: React hooks and context
@@ -21,7 +21,7 @@ A modern, full-stack AI chat application built with Next.js 15, featuring real-t
 - Node.js 18+ 
 - pnpm, npm, or yarn
 - Supabase account
-- OpenAI API key
+- nalang API key
 
 ### Installation
 
@@ -46,7 +46,8 @@ A modern, full-stack AI chat application built with Next.js 15, featuring real-t
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   OPENAI_API_KEY=your_openai_api_key
+   NALANG_API_KEY=your_nalang_api_key
+   NALANG_MODEL=nalang-xl-10 # optional, defaults to nalang-xl-10
    ```
 
 4. **Set up Supabase**
@@ -108,7 +109,7 @@ nalangai/
 - Update `tailwind.config.js` for custom color schemes
 
 ### AI Models
-- Change the OpenAI model in `app/api/chat/route.ts`
+- Change the nalang model via the `NALANG_MODEL` env or in `app/api/chat/route.ts`
 - Add support for other AI providers (Anthropic, Google, etc.)
 
 ### UI Components
