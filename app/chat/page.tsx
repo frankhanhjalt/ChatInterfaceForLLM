@@ -94,25 +94,25 @@ export default function ChatPage() {
       console.log("[v0] Loaded conversations:", fetchedConversations.length)
       setConversations(fetchedConversations)
 
-      // If no conversations exist, create a new one by default
-      if (fetchedConversations.length === 0) {
-        console.log("[v0] No conversations found, creating new chat by default")
-        try {
-          const newConversation = await apiClient.createConversation("New Chat")
-          console.log("[v0] New conversation created by default:", newConversation.id)
-          setConversations([newConversation])
-          setCurrentConversationId(newConversation.id)
-        } catch (error) {
-          console.error("[v0] Failed to create default conversation:", error)
-          toast({
-            title: "Error",
-            description: "Failed to create new chat",
-            variant: "destructive",
-          })
+      // Always create a new conversation when user logs in
+      console.log("[v0] Creating new chat after login")
+      try {
+        const newConversation = await apiClient.createConversation("New Chat")
+        console.log("[v0] New conversation created after login:", newConversation.id)
+        setConversations(prev => [newConversation, ...prev])
+        setCurrentConversationId(newConversation.id)
+      } catch (error) {
+        console.error("[v0] Failed to create new conversation after login:", error)
+        toast({
+          title: "Error",
+          description: "Failed to create new chat",
+          variant: "destructive",
+        })
+        
+        // Fallback: select first existing conversation if creation failed
+        if (fetchedConversations.length > 0) {
+          setCurrentConversationId(fetchedConversations[0].id)
         }
-      } else if (!currentConversationId) {
-        // Select first conversation if none selected
-        setCurrentConversationId(fetchedConversations[0].id)
       }
     } catch (error) {
       console.error("[v0] Failed to load conversations:", error)
