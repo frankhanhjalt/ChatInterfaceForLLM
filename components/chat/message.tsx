@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { UserIcon, BotIcon, SparklesIcon } from "lucide-react"
 
 interface MessageProps {
@@ -30,12 +30,28 @@ export function Message({ role, content, timestamp, className }: MessageProps) {
                 ? "ring-primary/20 bg-gradient-to-br from-primary to-primary/80" 
                 : "ring-secondary/20 bg-gradient-to-br from-secondary to-secondary/80"
             )}>
-              <AvatarFallback className={cn(
-                "text-sm font-semibold text-white",
-                isUser ? "bg-gradient-to-br from-primary to-primary/80" : "bg-gradient-to-br from-secondary to-secondary/80"
-              )}>
-                {isUser ? <UserIcon className="h-4 w-4" /> : <BotIcon className="h-4 w-4" />}
-              </AvatarFallback>
+              {isUser ? (
+                <AvatarFallback className={cn(
+                  "text-sm font-semibold text-white",
+                  "bg-gradient-to-br from-primary to-primary/80"
+                )}>
+                  <UserIcon className="h-4 w-4" />
+                </AvatarFallback>
+              ) : (
+                <>
+                  <AvatarImage 
+                    src="/img/avatar.png" 
+                    alt="AI Assistant Avatar"
+                    className="object-cover"
+                  />
+                  <AvatarFallback className={cn(
+                    "text-sm font-semibold text-white",
+                    "bg-gradient-to-br from-secondary to-secondary/80"
+                  )}>
+                    <BotIcon className="h-4 w-4" />
+                  </AvatarFallback>
+                </>
+              )}
             </Avatar>
           </div>
 
@@ -48,7 +64,7 @@ export function Message({ role, content, timestamp, className }: MessageProps) {
                   "font-semibold text-sm",
                   isUser ? "text-foreground" : "text-foreground"
                 )}>
-                  {isUser ? "You" : "AI Assistant"}
+                  {isUser ? "You" : "Nalang.ai"}
                 </span>
                 {!isUser && (
                   <SparklesIcon className="h-3 w-3 text-secondary animate-pulse" />

@@ -1,10 +1,10 @@
 "use client"
 
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Message } from "./message"
 import { ChatInput } from "./chat-input"
 import { cn } from "@/lib/utils"
 import { BotIcon, SparklesIcon, MessageSquareIcon } from "lucide-react"
+import Image from "next/image"
 
 interface ChatMessage {
   id: string
@@ -29,15 +29,21 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
   
   return (
     <div className={cn("flex flex-col h-full bg-background", className)}>
-      {/* Messages */}
-      <ScrollArea className="flex-1">
-        <div className="max-w-4xl mx-auto">
+      {/* Messages - Fixed height, no scrolling */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full max-w-4xl mx-auto overflow-y-auto">
           {messages.length === 0 ? (
             <div className="flex items-center justify-center h-full text-center p-8">
               <div className="space-y-6 max-w-md">
                 {/* Welcome Icon */}
-                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center">
-                  <BotIcon className="w-10 h-10 text-secondary" />
+                <div className="mx-auto w-20 h-20 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center overflow-hidden">
+                  <Image 
+                    src="/img/avatar.png" 
+                    alt="AI Assistant Avatar"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover rounded-full"
+                  />
                 </div>
                 
                 {/* Welcome Text */}
@@ -72,7 +78,7 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
               </div>
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1 p-4">
               {messages.map((message) => (
                 <Message key={message.id} role={message.role} content={message.content} timestamp={message.timestamp} />
               ))}
@@ -82,10 +88,12 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
-      {/* Input */}
-      <ChatInput onSendMessage={onSendMessage} disabled={isLoading} placeholder="Type your message..." />
+      {/* Input - Fixed at bottom */}
+      <div className="flex-shrink-0">
+        <ChatInput onSendMessage={onSendMessage} disabled={isLoading} placeholder="Type your message..." />
+      </div>
     </div>
   )
 }

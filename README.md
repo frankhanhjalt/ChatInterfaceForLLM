@@ -2,7 +2,7 @@
 
 A modern, full-stack AI chat application built with Next.js 15, featuring real-time AI conversations, user authentication, and a beautiful UI powered by Nalang.ai.
 
-![alt text](./img/demo.png "Demo")
+![alt text](./img/avatar.png "Demo")
 
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js 15, React 19, TypeScript
@@ -52,7 +52,7 @@ A modern, full-stack AI chat application built with Next.js 15, featuring real-t
 4. **Set up Supabase**
    - Create a new Supabase project
    - Set up the following tables in your database:
-     - `users` (handled by Supabase Auth)
+     - `users` (handled by Supabase Auth
      - `conversations` (id, title, user_id, created_at, updated_at)
      - `messages` (id, conversation_id, role, content, created_at)
    - Enable Row Level Security (RLS) policies

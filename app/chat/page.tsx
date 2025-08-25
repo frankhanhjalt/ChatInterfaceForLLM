@@ -30,6 +30,7 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>()
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
+  const [conversationsLoaded, setConversationsLoaded] = useState(false)
 
   const { messages, sendMessage, clearMessages, setMessagesFromExternal, isLoading } = useChat({
     conversationId: currentConversationId,
@@ -53,6 +54,8 @@ export default function ChatPage() {
 
   useEffect(() => {
     if (!loading && !user) {
+      // Reset conversations loaded flag when user is not authenticated
+      setConversationsLoaded(false)
       router.push("/auth/login")
     }
   }, [user, loading, router])
@@ -91,8 +94,24 @@ export default function ChatPage() {
       console.log("[v0] Loaded conversations:", fetchedConversations.length)
       setConversations(fetchedConversations)
 
-      // Select first conversation if none selected
-      if (fetchedConversations.length > 0 && !currentConversationId) {
+      // If no conversations exist, create a new one by default
+      if (fetchedConversations.length === 0) {
+        console.log("[v0] No conversations found, creating new chat by default")
+        try {
+          const newConversation = await apiClient.createConversation("New Chat")
+          console.log("[v0] New conversation created by default:", newConversation.id)
+          setConversations([newConversation])
+          setCurrentConversationId(newConversation.id)
+        } catch (error) {
+          console.error("[v0] Failed to create default conversation:", error)
+          toast({
+            title: "Error",
+            description: "Failed to create new chat",
+            variant: "destructive",
+          })
+        }
+      } else if (!currentConversationId) {
+        // Select first conversation if none selected
         setCurrentConversationId(fetchedConversations[0].id)
       }
     } catch (error) {
@@ -104,14 +123,16 @@ export default function ChatPage() {
       })
     } finally {
       setIsLoadingConversations(false)
+      setConversationsLoaded(true)
     }
   }
 
+  // Load conversations only once when user is authenticated and conversations haven't been loaded yet
   useEffect(() => {
-    if (user) {
+    if (user && !conversationsLoaded) {
       loadConversations()
     }
-  }, [user])
+  }, [user, conversationsLoaded])
 
   useEffect(() => {
     console.log("🔄 [useEffect] currentConversationId changed:", currentConversationId)
@@ -193,13 +214,27 @@ export default function ChatPage() {
   const handleDeleteAllConversations = async () => {
     try {
       await apiClient.deleteAllConversations()
-      setConversations([])
-      setCurrentConversationId(undefined)
       clearMessages()
-      toast({
-        title: "Success",
-        description: "All conversations deleted",
-      })
+      
+      // Create a new default conversation after deleting all
+      try {
+        const newConversation = await apiClient.createConversation("New Chat")
+        setConversations([newConversation])
+        setCurrentConversationId(newConversation.id)
+        toast({
+          title: "Success",
+          description: "All conversations deleted",
+        })
+      } catch (createError) {
+        console.error("Failed to create default conversation after delete all:", createError)
+        setConversations([])
+        setCurrentConversationId(undefined)
+        toast({
+          title: "Warning",
+          description: "Conversations deleted but failed to create new chat",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
       console.error("Failed to delete all conversations:", error)
       toast({
@@ -217,30 +252,15 @@ export default function ChatPage() {
     console.log("🔑 [handleSendMessage] User authenticated:", !!user)
     console.log("📱 [handleSendMessage] Messages state:", messages)
     
-    // If no conversation is selected, create a new one first
+    // We should always have a conversation selected now due to default creation
     if (!currentConversationId) {
-      console.log("🆕 [handleSendMessage] No conversation selected, creating new one...")
-      try {
-        const newConversation = await apiClient.createConversation("New Chat")
-        console.log("✅ [handleSendMessage] New conversation created:", newConversation.id)
-        setConversations((prev) => [newConversation, ...prev])
-        setCurrentConversationId(newConversation.id)
-        
-        // Wait a moment for the state to update, then send the message
-        setTimeout(() => {
-          console.log("⏰ [handleSendMessage] Sending message after conversation creation...")
-          sendMessage(content)
-        }, 100)
-        return
-      } catch (error) {
-        console.error("❌ [handleSendMessage] Failed to create conversation:", error)
-        toast({
-          title: "Error",
-          description: "Failed to create new chat",
-          variant: "destructive",
-        })
-        return
-      }
+      console.error("❌ [handleSendMessage] No conversation selected - this shouldn't happen")
+      toast({
+        title: "Error",
+        description: "No conversation selected",
+        variant: "destructive",
+      })
+      return
     }
 
     console.log("📤 [handleSendMessage] Sending message to existing conversation...")
@@ -275,7 +295,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="fixed inset-0 flex bg-background overflow-hidden">
       <Sidebar
         conversations={conversations}
         currentConversationId={currentConversationId}
@@ -286,15 +306,15 @@ export default function ChatPage() {
         onDeleteAllConversations={handleDeleteAllConversations}
       />
 
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border/50 bg-card/50 backdrop-blur-sm">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header - Fixed at top */}
+        <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-border/50 bg-card/50 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/10 flex items-center justify-center">
               <MessageSquareIcon className="h-4 w-4 text-secondary" />
             </div>
             <h1 className="text-lg font-semibold text-card-foreground">
-              {conversations.find((c) => c.id === currentConversationId)?.title || "Select a conversation"}
+              {conversations.find((c) => c.id === currentConversationId)?.title || "New Chat"}
             </h1>
           </div>
 
@@ -324,12 +344,15 @@ export default function ChatPage() {
           </div>
         </div>
 
-        <ChatArea 
-          messages={messages} 
-          onSendMessage={handleSendMessage} 
-          isLoading={isLoading} 
-          className="flex-1" 
-        />
+        {/* Chat Area - Fixed height, no scrolling */}
+        <div className="flex-1 overflow-hidden">
+          <ChatArea 
+            messages={messages} 
+            onSendMessage={handleSendMessage} 
+            isLoading={isLoading} 
+            className="h-full" 
+          />
+        </div>
       </div>
     </div>
   )

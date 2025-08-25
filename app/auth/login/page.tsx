@@ -11,6 +11,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { BotIcon, SparklesIcon, ArrowRightIcon, MailIcon, LockIcon } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -45,8 +46,14 @@ export default function LoginPage() {
         <div className="space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">
-            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center">
-              <BotIcon className="w-10 h-10 text-secondary" />
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center overflow-hidden">
+                      <Image 
+          src="/img/avatar.png" 
+          alt="AI Assistant Avatar"
+                width={80}
+                height={80}
+                className="w-full h-full object-cover rounded-full"
+              />
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
@@ -133,13 +140,7 @@ export default function LoginPage() {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Link 
-                    href="/auth/sign-up" 
-                    className="font-medium text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors"
-                  >
-                    Sign up here
-                  </Link>
+                  New user registration is currently disabled
                 </p>
               </div>
             </CardContent>

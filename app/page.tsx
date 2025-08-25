@@ -1,13 +1,28 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/auth/auth-provider"
 import { BotIcon, SparklesIcon, LoaderIcon } from "lucide-react"
+import Image from "next/image"
 
 export default function HomePage() {
   const router = useRouter()
   const { user, loading } = useAuth()
+  const [timeoutReached, setTimeoutReached] = useState(false)
+
+  useEffect(() => {
+    // Add a timeout fallback in case authentication gets stuck
+    const timeout = setTimeout(() => {
+      if (loading) {
+        console.log("[Nalang.ai] Authentication timeout reached, redirecting to login")
+        setTimeoutReached(true)
+        router.push("/auth/login")
+      }
+    }, 15000) // 15 seconds timeout
+
+    return () => clearTimeout(timeout)
+  }, [loading, router])
 
   useEffect(() => {
     if (!loading) {
@@ -19,15 +34,40 @@ export default function HomePage() {
     }
   }, [user, loading, router])
 
+  // If timeout reached, show error message
+  if (timeoutReached) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+        <div className="text-center space-y-6">
+          <div className="mx-auto w-24 h-24 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-full flex items-center justify-center overflow-hidden relative">
+            <BotIcon className="w-12 h-12 text-red-500" />
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+              Authentication Timeout
+            </h1>
+            <p className="text-muted-foreground text-lg">
+              Redirecting to login page...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="text-center space-y-6">
         {/* Loading Icon */}
-        <div className="mx-auto w-24 h-24 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center">
-          <div className="relative">
-            <BotIcon className="w-12 h-12 text-secondary" />
-            <LoaderIcon className="absolute inset-0 w-12 h-12 text-secondary animate-spin" />
-          </div>
+        <div className="mx-auto w-24 h-24 bg-gradient-to-br from-secondary/20 to-secondary/10 rounded-full flex items-center justify-center overflow-hidden relative">
+          <Image 
+            src="/img/avatar.png" 
+            alt="AI Assistant Avatar"
+            width={96}
+            height={96}
+            className="w-full h-full object-cover rounded-full"
+          />
+          <LoaderIcon className="absolute inset-0 w-12 h-12 text-secondary animate-spin" />
         </div>
         
         {/* Loading Text */}

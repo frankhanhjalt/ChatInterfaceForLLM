@@ -107,10 +107,11 @@ export function useChat({ conversationId, onError }: UseChatOptions = {}) {
             if (chunk.trim()) {
               console.log(`🔄 [useChat] Updating message ${assistantMessage.id} with chunk: "${chunk}"`)
               // Update the message with the new text chunk
+              assistantMessage.content += chunk
               setMessages((prev) => {
                 const updatedMessages = prev.map((msg) => 
                   msg.id === assistantMessage.id 
-                    ? { ...msg, content: msg.content + chunk }
+                    ? { ...msg, content: assistantMessage.content }
                     : msg
                 )
                 console.log(`🔄 [useChat] Updated messages state:`, updatedMessages)
@@ -124,18 +125,13 @@ export function useChat({ conversationId, onError }: UseChatOptions = {}) {
         }
 
         // Save the complete assistant message to the database after streaming (only once)
-        setMessages((prev) => {
-          const currentMessage = prev.find(msg => msg.id === assistantMessage.id)
-          if (currentMessage && currentMessage.content) {
-            console.log("💾 [useChat] Saving complete assistant message to database (only once):", currentMessage.content)
-            
-            // Save to database (only once)
-            apiClient.createMessage(conversationId, "assistant", currentMessage.content)
-              .then(() => console.log("✅ [useChat] Assistant message saved to database successfully"))
-              .catch(error => console.error("❌ [useChat] Failed to save assistant message:", error))
-          }
-          return prev
-        })
+        if (assistantMessage.content) {
+          console.log("💾 [useChat] Saving complete assistant message to database (only once):", assistantMessage.content)
+          
+          // Save to database (only once)
+          await apiClient.createMessage(conversationId, "assistant", assistantMessage.content)
+          console.log("✅ [useChat] Assistant message saved to database successfully")
+        }
       } catch (error) {
         console.error("❌ [useChat] Chat error:", error)
         onError?.(error instanceof Error ? error : new Error("Unknown error"))

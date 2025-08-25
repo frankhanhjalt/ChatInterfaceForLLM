@@ -24,10 +24,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const getInitialSession = async () => {
       try {
         console.log("[Nalang.ai] Getting initial session")
+        
+        // Add timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 10000)
+        )
+        
         const {
           data: { session },
           error,
-        } = await supabase.auth.getSession()
+        } = await Promise.race([sessionPromise, timeoutPromise]) as any
 
         if (error) {
           console.error("[Nalang.ai] Session error:", error)
@@ -36,9 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("[Nalang.ai] Initial session user:", session?.user?.id || "none")
         setUser(session?.user ?? null)
       } catch (error) {
-                  console.error("[Nalang.ai] Failed to get initial session:", error)
+        console.error("[Nalang.ai] Failed to get initial session:", error)
         setUser(null)
       } finally {
+        console.log("[Nalang.ai] Setting loading to false")
         setLoading(false)
       }
     }
