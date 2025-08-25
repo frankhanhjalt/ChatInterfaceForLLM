@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     user = authUser
 
-    const { messages, conversationId } = await request.json()
+    const { messages, conversationId, model: modelFromBody } = await request.json()
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json({ error: "Messages are required" }, { status: 400 })
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "NALANG_API_KEY is not configured" }, { status: 500 })
     }
 
-    const model = process.env.NALANG_MODEL || 'nalang-xl-10'
+    const model = (typeof modelFromBody === 'string' && modelFromBody.trim()) ? modelFromBody : (process.env.NALANG_MODEL || 'nalang-xl-10')
 
     // Build nalang request body
     const requestBody = {

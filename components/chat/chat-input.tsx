@@ -5,7 +5,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { SendIcon, PaperclipIcon, MicIcon } from "lucide-react"
+import { SendIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface ChatInputProps {
@@ -84,28 +84,6 @@ export function ChatInput({
               
               {/* Action Buttons */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                {/* Attachment Button */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={disabled}
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <PaperclipIcon className="h-4 w-4" />
-                </Button>
-                
-                {/* Voice Button */}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={disabled}
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                >
-                  <MicIcon className="h-4 w-4" />
-                </Button>
-                
                 {/* Send Button */}
                 <Button
                   type="submit"

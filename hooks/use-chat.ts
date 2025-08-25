@@ -13,9 +13,10 @@ interface ChatMessage {
 interface UseChatOptions {
   conversationId?: string
   onError?: (error: Error) => void
+  model?: string
 }
 
-export function useChat({ conversationId, onError }: UseChatOptions = {}) {
+export function useChat({ conversationId, onError, model }: UseChatOptions = {}) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -66,7 +67,7 @@ export function useChat({ conversationId, onError }: UseChatOptions = {}) {
         console.log("🤖 [useChat] Calling OpenAI API with messages:", chatMessages)
         
         // Get the stream and start processing
-        const stream = await apiClient.streamChat(chatMessages, conversationId)
+        const stream = await apiClient.streamChat(chatMessages, conversationId, model)
         const reader = stream.getReader()
         const decoder = new TextDecoder()
 
@@ -142,7 +143,7 @@ export function useChat({ conversationId, onError }: UseChatOptions = {}) {
         setIsLoading(false)
       }
     },
-    [messages, conversationId, isLoading, onError],
+    [messages, conversationId, isLoading, onError, model],
   )
 
   const clearMessages = useCallback(() => {

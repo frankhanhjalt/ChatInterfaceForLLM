@@ -103,15 +103,15 @@ export class ApiClient {
   }
 
   // Chat streaming
-  async streamChat(messages: ChatMessage[], conversationId?: string): Promise<ReadableStream> {
-    console.log("🌐 [streamChat] Starting chat request with:", { messages, conversationId })
+  async streamChat(messages: ChatMessage[], conversationId?: string, model?: string): Promise<ReadableStream> {
+    console.log("🌐 [streamChat] Starting chat request with:", { messages, conversationId, model })
     
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ messages, conversationId }),
+      body: JSON.stringify({ messages, conversationId, model }),
     })
 
     console.log("📡 [streamChat] Response received:", {

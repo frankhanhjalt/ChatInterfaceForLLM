@@ -1,10 +1,12 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { Message } from "./message"
 import { ChatInput } from "./chat-input"
 import { cn } from "@/lib/utils"
 import { BotIcon, SparklesIcon, MessageSquareIcon } from "lucide-react"
 import Image from "next/image"
+// Model selector moved into ChatInput
 
 interface ChatMessage {
   id: string
@@ -26,6 +28,13 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
     isLoading, 
     hasOnSendMessage: !!onSendMessage 
   })
+  
+  const endOfMessagesRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    // Always scroll to the latest message when messages change or streaming toggles
+    endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages, isLoading])
   
   return (
     <div className={cn("flex flex-col h-full bg-background", className)}>
@@ -85,6 +94,7 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
               {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === "user" && (
                 <Message role="assistant" content="Thinking..." className="animate-pulse" />
               )}
+              <div ref={endOfMessagesRef} />
             </div>
           )}
         </div>
@@ -92,7 +102,11 @@ export function ChatArea({ messages, onSendMessage, isLoading = false, className
 
       {/* Input - Fixed at bottom */}
       <div className="flex-shrink-0">
-        <ChatInput onSendMessage={onSendMessage} disabled={isLoading} placeholder="Type your message..." />
+        <ChatInput 
+          onSendMessage={onSendMessage} 
+          disabled={isLoading} 
+          placeholder="Type your message..." 
+        />
       </div>
     </div>
   )

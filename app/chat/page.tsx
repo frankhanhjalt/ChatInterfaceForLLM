@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth/auth-provider"
 import { useChat } from "@/hooks/use-chat"
 import { apiClient } from "@/lib/api"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SunIcon, MoonIcon, LogOutIcon, MessageSquareIcon } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
@@ -31,9 +32,11 @@ export default function ChatPage() {
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>()
   const [isLoadingConversations, setIsLoadingConversations] = useState(true)
   const [conversationsLoaded, setConversationsLoaded] = useState(false)
+  const [selectedModel, setSelectedModel] = useState<string>("nalang-xl-10")
 
   const { messages, sendMessage, clearMessages, setMessagesFromExternal, isLoading } = useChat({
     conversationId: currentConversationId,
+    model: selectedModel,
     onError: (error) => {
       toast({
         title: "Error",
@@ -263,7 +266,7 @@ export default function ChatPage() {
       return
     }
 
-    console.log("📤 [handleSendMessage] Sending message to existing conversation...")
+    console.log("📤 [handleSendMessage] Sending message to existing conversation with model:", selectedModel)
     try {
       await sendMessage(content)
       console.log("✅ [handleSendMessage] sendMessage completed successfully")
@@ -316,6 +319,20 @@ export default function ChatPage() {
             <h1 className="text-lg font-semibold text-card-foreground">
               {conversations.find((c) => c.id === currentConversationId)?.title || "New Chat"}
             </h1>
+            <div className="ml-2">
+              <Select value={selectedModel} onValueChange={setSelectedModel}>
+                <SelectTrigger className="h-8">
+                  <SelectValue placeholder="Select a model" />
+                </SelectTrigger>
+                <SelectContent className="data-[state=open]:animate-none data-[state=closed]:animate-none">
+                  <SelectItem value="nalang-v17-2">nalang-v17-2</SelectItem>
+                  <SelectItem value="nalang-turbo-v19">nalang-turbo-v19</SelectItem>
+                  <SelectItem value="nalang-turbo-v18">nalang-turbo-v18</SelectItem>
+                  <SelectItem value="nalang-xl-16k">nalang-xl-16k</SelectItem>
+                  <SelectItem value="nalang-xl-10">nalang-xl-10</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
